@@ -19,20 +19,49 @@ const queryClient = new QueryClient({
 function App() {
   console.log('=== PolyGrand App Starting ===');
   
-  try {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </Router>
-      </QueryClientProvider>
-    );
-  } catch (error) {
-    console.error('App Error:', error);
-    return <div style={{ padding: '20px', color: 'red' }}>Error loading app: {String(error)}</div>;
-  }
+  return (
+    <div style={{ 
+      padding: '40px', 
+      backgroundColor: '#f0f0f0',
+      minHeight: '100vh',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        backgroundColor: 'white',
+        padding: '30px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <h1 style={{ 
+          color: '#00dc94', 
+          fontSize: '48px',
+          fontWeight: 'bold',
+          marginBottom: '10px',
+          borderBottom: '3px solid #00dc94',
+          paddingBottom: '10px'
+        }}>
+          🎯 PolyGrand
+        </h1>
+        <p style={{ 
+          color: '#666', 
+          fontSize: '20px',
+          marginBottom: '30px'
+        }}>
+          Prediction Markets on Algorand
+        </p>
+        
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
+            </Routes>
+          </Router>
+        </QueryClientProvider>
+      </div>
+    </div>
+  );
 }
 
 export default App;

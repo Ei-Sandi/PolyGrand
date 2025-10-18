@@ -9,15 +9,49 @@ const api = axios.create({
   },
 });
 
+// Transform backend market response to frontend Market type
+function transformMarket(backendMarket: any): Market {
+  // Handle multi-outcome markets by taking first two outcomes
+  const outcomes = backendMarket.outcomes || [];
+  const outcomeAName = outcomes[0] || 'Yes';
+  const outcomeBName = outcomes[1] || 'No';
+  
+  // Get prices for outcomes
+  const prices = backendMarket.prices || {};
+  const outcomeAPrice = prices[outcomeAName] || 0.5;
+  const outcomeBPrice = prices[outcomeBName] || 0.5;
+  
+  return {
+    id: parseInt(backendMarket.id?.replace('market_', '') || '0', 16) || 0,
+    appId: backendMarket.app_id || 0,
+    title: backendMarket.question || '',
+    description: backendMarket.description || '',
+    category: backendMarket.category,
+    outcomeAName,
+    outcomeBName,
+    outcomeAAsaId: backendMarket.outcome_token_ids?.[outcomeAName] || 0,
+    outcomeBAsaId: backendMarket.outcome_token_ids?.[outcomeBName] || 0,
+    creatorAddress: backendMarket.creator_address || '',
+    resolverAddress: backendMarket.creator_address || '', // Using creator as resolver for now
+    resolutionTime: backendMarket.end_time || '',
+    isResolved: backendMarket.status === 'resolved',
+    winningOutcome: backendMarket.resolved_outcome ? (backendMarket.resolved_outcome === outcomeAName ? 0 : 1) : null,
+    createdAt: backendMarket.created_at || '',
+    totalVolume: backendMarket.total_volume || 0,
+    outcomeAPrice,
+    outcomeBPrice,
+  };
+}
+
 // Markets
 export const getMarkets = async (): Promise<Market[]> => {
-  const response = await api.get('/markets');
-  return response.data;
+  const response = await api.get('/markets/');
+  return (response.data || []).map(transformMarket);
 };
 
 export const getMarket = async (id: number): Promise<Market> => {
   const response = await api.get(`/markets/${id}`);
-  return response.data;
+  return transformMarket(response.data);
 };
 
 export const createMarket = async (marketData: CreateMarketParams): Promise<Market> => {
@@ -50,7 +84,13 @@ export const getUserTrades = async (address: string): Promise<Trade[]> => {
 // Stats
 export const getPlatformStats = async (): Promise<MarketStats> => {
   const response = await api.get('/stats/platform');
-  return response.data;
+  // Transform backend response to match frontend expectations
+  return {
+    totalMarkets: response.data.total_markets || 0,
+    totalVolume: response.data.total_volume || 0,
+    activeUsers: response.data.total_traders || 0,
+    resolvedMarkets: response.data.resolved_markets || 0,
+  };
 };
 
 export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
