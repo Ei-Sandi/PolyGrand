@@ -180,3 +180,6 @@ playground
 # Misc
 examples/**/smart_contracts/artifacts
 examples/**/.algokit/sources 
+
+# npm logs
+npm-debug.log*

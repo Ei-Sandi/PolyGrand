@@ -44,6 +44,45 @@ Once the template is instantiated you can follow the [README.md](template_conten
 
 **To initialize using the `algokit` CLI**:
 
+## Local scaffold added
+
+This repository has been extended locally with a minimal full-stack scaffold to help you start building an Algorand-enabled application. The added structure (not part of the original template) is:
+
+- `contracts/` - PyTeal smart contracts (see `contracts/sample_contract.py`)
+- `backend/` - Node.js/Express API stub (see `backend/index.js`)
+- `frontend/` - React/TypeScript frontend placeholder (use CRA or Vite to bootstrap)
+- `scripts/` - deployment & utility scripts (see `scripts/deploy.sh`)
+- `docs/` - project documentation
+
+Quick start (minimal):
+
+1. Start the backend:
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+2. Compile the sample contract to TEAL (Python 3 and PyTeal required):
+
+```bash
+python3 contracts/sample_contract.py > build/sample_contract.teal
+```
+
+3. Create the frontend using your preferred tool (Create React App or Vite).
+
+Replace placeholder files with your real implementation as you go.
+
+## Next steps
+
+- Replace `contracts/sample_contract.py` with your PyTeal contracts and add tests.
+- Implement backend endpoints that compile/deploy contracts or interact with the Algorand SDK.
+- Bootstrap the frontend using Create React App or Vite and connect it to the backend.
+- Extend `scripts/deploy.sh` to use `algokit` or the Algorand SDK for automated deployments.
+
+
+
 - Execute the command `algokit init`. This initiates an interactive wizard that assists in selecting the most appropriate template for your project requirements.
 
 **To initialize within GitHub Codespaces**:
