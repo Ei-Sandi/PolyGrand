@@ -1,6 +1,6 @@
 from algosdk import account, transaction
 from algosdk.v2client import algod
-from algosdk.future.transaction import AssetCreateTxn, ApplicationCreateTxn, PaymentTxn
+from algosdk.transaction import AssetCreateTxn, ApplicationCreateTxn, PaymentTxn, StateSchema, OnComplete, wait_for_confirmation
 import os
 from dotenv import load_dotenv
 
@@ -67,8 +67,8 @@ def deploy_contract():
         txid_b = algod_client.send_transaction(signed_txn_b)
         
         # Wait for confirmations
-        transaction.wait_for_confirmation(algod_client, txid_a, 4)
-        transaction.wait_for_confirmation(algod_client, txid_b, 4)
+        wait_for_confirmation(algod_client, txid_a, 4)
+        wait_for_confirmation(algod_client, txid_b, 4)
         
         # Get created ASA IDs
         ptx_a = algod_client.pending_transaction_info(txid_a)
@@ -95,17 +95,17 @@ def deploy_contract():
         app_txn = ApplicationCreateTxn(
             sender=CREATOR_ADDRESS,
             sp=params,
-            on_complete=transaction.OnComplete.NoOpOC,
+            on_complete=OnComplete.NoOpOC,
             approval_program=bytes.fromhex(approval_result),
             clear_program=bytes.fromhex(clear_result),
-            global_schema=transaction.StateSchema(10, 10),
-            local_schema=transaction.StateSchema(0, 0),
+            global_schema=StateSchema(10, 10),
+            local_schema=StateSchema(0, 0),
             app_args=[b"setup", asa_a_id.to_bytes(8, 'big'), asa_b_id.to_bytes(8, 'big')]
         )
         
         signed_app_txn = app_txn.sign(PRIVATE_KEY)
         txid = algod_client.send_transaction(signed_app_txn)
-        transaction.wait_for_confirmation(algod_client, txid, 4)
+        wait_for_confirmation(algod_client, txid, 4)
         
         # Get app ID
         ptx = algod_client.pending_transaction_info(txid)

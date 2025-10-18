@@ -181,5 +181,10 @@ playground
 examples/**/smart_contracts/artifacts
 examples/**/.algokit/sources 
 
+# Compiled TEAL files (generated from PyTeal source)
+# These are build artifacts - regenerate with: .venv/bin/python contracts/market_contract.py
+*.teal
+*.tok
+
 # npm logs
 npm-debug.log*
