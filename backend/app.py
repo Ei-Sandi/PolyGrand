@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from routes import markets, tournaments, staking, ai
+from routes import stats as stats_routes
 from services.websocket import websocket_manager
 
 
@@ -75,6 +76,7 @@ app.include_router(markets.router, prefix="/api/v1/markets", tags=["Markets"])
 app.include_router(tournaments.router, prefix="/api/v1/tournaments", tags=["Tournaments"])
 app.include_router(staking.router, prefix="/api/v1/staking", tags=["Staking"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI"])
+app.include_router(stats_routes.router, prefix="/api/v1/stats", tags=["Stats"])
 
 
 # WebSocket endpoint

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
-import type { Market, Trade, UserPosition, LeaderboardEntry, MarketStats, CreateMarketParams } from '../types';
+import type { Market, Trade, UserPosition, LeaderboardEntry, MarketStats } from '../types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -49,14 +49,14 @@ export const getMarkets = async (): Promise<Market[]> => {
   return (response.data || []).map(transformMarket);
 };
 
-export const getMarket = async (id: number): Promise<Market> => {
+export const getMarket = async (id: string | number): Promise<Market> => {
   const response = await api.get(`/markets/${id}`);
   return transformMarket(response.data);
 };
 
-export const createMarket = async (marketData: CreateMarketParams): Promise<Market> => {
-  const response = await api.post('/markets', marketData);
-  return response.data;
+export const createMarket = async (marketData: any): Promise<Market> => {
+  const response = await api.post('/markets/', marketData);
+  return transformMarket(response.data);
 };
 
 // Trading

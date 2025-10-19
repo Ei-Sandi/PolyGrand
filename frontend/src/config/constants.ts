@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 // Algorand Configuration
 export const ALGORAND_NETWORK = import.meta.env.VITE_ALGORAND_NETWORK || 'testnet';

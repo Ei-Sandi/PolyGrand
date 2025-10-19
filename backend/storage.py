@@ -148,6 +148,14 @@ class InMemoryStorage:
             self.users[address] = user
         return user
 
+    def list_markets(self) -> List[Market]:
+        """Alias for get_all_markets"""
+        return self.get_all_markets()
+
+    def list_users(self) -> List[User]:
+        """Get all users"""
+        return list(self.users.values())
+
 
 # Global singleton instance
 storage = InMemoryStorage()

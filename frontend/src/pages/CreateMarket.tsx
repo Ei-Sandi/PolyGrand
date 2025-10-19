@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, DollarSign, FileText, PlusCircle, MinusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../hooks/useWallet';
 import { createMarket } from '../services/api';
-import { microAlgosToAlgos, algosToMicroAlgos } from '../services/algorand';
+import { microAlgosToAlgos } from '../services/algorand';
 
 interface OutcomeInput {
   id: string;
@@ -14,6 +14,7 @@ interface OutcomeInput {
 export default function CreateMarket() {
   const { account, isConnected } = useWallet();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -28,7 +29,13 @@ export default function CreateMarket() {
   const createMarketMutation = useMutation({
     mutationFn: createMarket,
     onSuccess: (data) => {
-      navigate(`/markets/${data.id}`);
+      queryClient.invalidateQueries({ queryKey: ['markets'] });
+      alert('Market created successfully!');
+      navigate('/markets');
+    },
+    onError: (error: any) => {
+      console.error('Create market error:', error);
+      alert(error?.response?.data?.detail || 'Failed to create market. Please try again.');
     },
   });
 
@@ -62,17 +69,19 @@ export default function CreateMarket() {
       return;
     }
 
-    const liquidityMicroAlgos = algosToMicroAlgos(parseFloat(initialLiquidity));
+    const liquidityAmount = parseFloat(initialLiquidity);
 
+    // Transform to match backend schema
     createMarketMutation.mutate({
-      title,
+      question: title,  // Backend uses 'question'
       description,
       category,
       outcomes: validOutcomes.map(o => o.name),
-      resolutionDate: new Date(resolutionDate).toISOString(),
-      initialLiquidity: liquidityMicroAlgos,
-      creatorAddress: account.address,
-    });
+      end_time: new Date(resolutionDate).toISOString(),  // Backend uses 'end_time'
+      resolution_source: description || 'Manual resolution',  // Backend requires 'resolution_source'
+      initial_liquidity: liquidityAmount,  // Backend uses 'initial_liquidity'
+      creator_address: account.address,  // Backend uses 'creator_address'
+    } as any);
   };
 
   if (!isConnected || !account) {

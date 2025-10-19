@@ -1,23 +1,51 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { getMarket } from '../services/api';
 import { useWallet } from '../hooks/useWallet';
-import { microAlgosToAlgos } from '../services/algorand';
+import { microAlgosToAlgos, algosToMicroAlgos } from '../services/algorand';
 import { formatDistanceToNow } from 'date-fns';
+import axios from 'axios';
+import { API_BASE_URL } from '../config/constants';
 
 export default function MarketDetail() {
   const { id } = useParams<{ id: string }>();
   const { account, isConnected } = useWallet();
+  const queryClient = useQueryClient();
   const [selectedOutcome, setSelectedOutcome] = useState<number>(0);
   const [betAmount, setBetAmount] = useState('');
-  const [isTrading, setIsTrading] = useState(false);
 
   const { data: market, isLoading } = useQuery({
     queryKey: ['market', id],
-    queryFn: () => getMarket(Number(id)),
+    queryFn: () => getMarket(id!),
     enabled: !!id,
+  });
+
+  const tradeMutation = useMutation({
+    mutationFn: async ({ outcome, amount }: { outcome: string; amount: number }) => {
+      const response = await axios.post(
+        `${API_BASE_URL}/markets/${id}/trade`,
+        {
+          outcome,
+          amount: algosToMicroAlgos(amount),
+          trader_address: account?.address,
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      // Refresh market data
+      queryClient.invalidateQueries({ queryKey: ['market', id] });
+      queryClient.invalidateQueries({ queryKey: ['markets'] });
+      // Clear form
+      setBetAmount('');
+      alert('Trade executed successfully!');
+    },
+    onError: (error: any) => {
+      console.error('Trade failed:', error);
+      alert(error.response?.data?.detail || 'Trade failed. Please try again.');
+    },
   });
 
   const handleTrade = async () => {
@@ -32,17 +60,15 @@ export default function MarketDetail() {
       return;
     }
 
-    setIsTrading(true);
-    try {
-      // TODO: Implement actual trading logic
-      // This will call the backend API and sign transactions
-      alert(`Trading ${amount} ALGO on ${selectedOutcome === 0 ? market.outcomeAName : market.outcomeBName}`);
-    } catch (error) {
-      console.error('Trade failed:', error);
-      alert('Trade failed. Please try again.');
-    } finally {
-      setIsTrading(false);
+    if (amount > microAlgosToAlgos(account.balance)) {
+      alert('Insufficient balance');
+      return;
     }
+
+    // Determine outcome name based on selection
+    const outcomeName = selectedOutcome === 0 ? market.outcomeAName : market.outcomeBName;
+
+    tradeMutation.mutate({ outcome: outcomeName, amount });
   };
 
   if (isLoading) {
@@ -277,11 +303,17 @@ export default function MarketDetail() {
               {/* Trade Button */}
               <button
                 onClick={handleTrade}
-                disabled={isTrading || !betAmount || parseFloat(betAmount) <= 0}
+                disabled={tradeMutation.isPending || !betAmount || parseFloat(betAmount) <= 0}
                 className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isTrading ? 'Processing...' : 'Place Bet'}
+                {tradeMutation.isPending ? 'Processing...' : 'Place Bet'}
               </button>
+
+              {tradeMutation.isError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                  Trade failed. Please try again.
+                </div>
+              )}
 
               <p className="text-xs text-gray-500 text-center">
                 Transactions are secured by the Algorand blockchain

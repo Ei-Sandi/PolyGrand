@@ -12,7 +12,7 @@ export default function MarketCard({ market }: MarketCardProps) {
   const outcomeBPercent = 100 - outcomeAPercent;
 
   return (
-    <Link to={`/markets/${market.appId}`} className="block">
+    <Link to={`/markets/${market.id}`} className="block">
       <div className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
