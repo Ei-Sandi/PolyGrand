@@ -33,3 +33,15 @@
     @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-algorand focus:border-transparent outline-none;
   }
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

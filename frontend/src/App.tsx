@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import React, { useEffect, type ReactNode } from 'react';
+import { useWallet } from './hooks/useWallet';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,9 +50,159 @@ const DUMMY_MARKETS = [
   }
 ];
 
+// Wallet Connect Modal Component (simulates Pera Wallet)
+function WalletModal({ isOpen, onClose, onConnect }: { isOpen: boolean; onClose: () => void; onConnect: () => Promise<void> }) {
+  if (!isOpen) return null;
+
+  const handleWalletClick = async (walletType: 'mobile' | 'web') => {
+    console.log(`Connecting via Pera Wallet ${walletType}...`);
+    await onConnect();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 relative animate-[fadeIn_0.2s_ease-out]" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+        >
+          ×
+        </button>
+        
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-yellow-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <span className="text-3xl">🥑</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pera Wallet</h2>
+          <p className="text-gray-600 text-sm">Connect your Algorand wallet</p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => handleWalletClick('mobile')}
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center">
+                <span className="text-xl">📱</span>
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Pera Wallet Mobile</div>
+                <div className="text-xs text-gray-500">Scan QR with mobile app</div>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleWalletClick('web')}
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
+                <span className="text-xl">💻</span>
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Pera Wallet Web</div>
+                <div className="text-xs text-gray-500">Connect with browser extension</div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div className="mt-6 flex items-center justify-center space-x-2 text-xs text-gray-500">
+          <span>🔒</span>
+          <span>Secure connection • Mock Demo Mode</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Wallet Connect Button Component
+function WalletButton() {
+  const { account, isConnected, isConnecting, error, showModal, connect, disconnect, setShowModal } = useWallet();
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch (error) {
+      console.error('Connection error:', error);
+      setShowModal(false);
+    }
+  };
+
+  if (isConnecting) {
+    return (
+      <>
+        <WalletModal isOpen={showModal} onClose={() => setShowModal(false)} onConnect={handleConnect} />
+        <button
+          disabled
+          className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center space-x-2"
+        >
+          <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+          <span>Connecting...</span>
+        </button>
+      </>
+    );
+  }
+
+  if (isConnected && account) {
+    return (
+      <div className="flex items-center space-x-3">
+        <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+          <div className="text-sm font-medium text-gray-900 flex items-center space-x-2">
+            <span className="text-green-500">●</span>
+            <span>{account.address.slice(0, 6)}...{account.address.slice(-4)}</span>
+          </div>
+          <div className="text-xs text-gray-600 mt-0.5">
+            {account.balance.toFixed(2)} ALGO
+          </div>
+        </div>
+        <button
+          onClick={disconnect}
+          className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+        >
+          Disconnect
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <WalletModal isOpen={showModal} onClose={() => setShowModal(false)} onConnect={handleConnect} />
+      <button
+        onClick={handleOpenModal}
+        className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg flex items-center space-x-2"
+      >
+        <span>🔗</span>
+        <span>Connect Wallet</span>
+      </button>
+      {error && (
+        <div className="absolute top-full mt-2 right-0 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm max-w-xs z-10">
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Simple Layout
 function SimpleLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const { initializeWallet, reconnectSession } = useWallet();
+
+  useEffect(() => {
+    // Initialize wallet on mount
+    initializeWallet();
+    
+    // Try to reconnect to existing session
+    reconnectSession();
+  }, [initializeWallet, reconnectSession]);
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -65,16 +216,22 @@ function SimpleLayout({ children }: { children: ReactNode }) {
               <span className="text-xl font-bold text-gray-900">PolyGrand</span>
             </Link>
             
-            <div className="flex items-center space-x-1">
-              <Link to="/" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                Home
-              </Link>
-              <Link to="/markets" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/markets' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                Markets
-              </Link>
-              <Link to="/create" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/create' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                Create
-              </Link>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                <Link to="/" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  Home
+                </Link>
+                <Link to="/markets" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/markets' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  Markets
+                </Link>
+                <Link to="/create" className={`px-4 py-2 rounded-lg font-medium transition-colors ${location.pathname === '/create' ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  Create
+                </Link>
+              </div>
+              
+              <div className="border-l border-gray-300 pl-4 relative">
+                <WalletButton />
+              </div>
             </div>
           </div>
         </div>
@@ -337,16 +494,344 @@ function MarketDetailPage() {
 
 // Create Market Page
 function CreateMarketPage() {
+  const { isConnected, account } = useWallet();
+  const [step, setStep] = React.useState(1);
+  const [formData, setFormData] = React.useState({
+    question: '',
+    description: '',
+    category: 'Crypto',
+    endDate: '',
+    initialLiquidity: 100,
+    outcomes: ['Yes', 'No']
+  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    // Simulate market creation
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    console.log('Creating market with data:', formData);
+    console.log('Creator wallet:', account?.address);
+    
+    setIsSubmitting(false);
+    setSuccess(true);
+    
+    // Reset after 3 seconds
+    setTimeout(() => {
+      setSuccess(false);
+      setStep(1);
+      setFormData({
+        question: '',
+        description: '',
+        category: 'Crypto',
+        endDate: '',
+        initialLiquidity: 100,
+        outcomes: ['Yes', 'No']
+      });
+    }, 3000);
+  };
+
+  // If not connected, show wallet prompt
+  if (!isConnected) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-12 border border-gray-100 text-center">
+          <div className="w-20 h-20 bg-yellow-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <span className="text-4xl">🔒</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Wallet Required</h1>
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            You need to connect your wallet to create a prediction market. Connect your Pera Wallet to get started.
+          </p>
+          <WalletButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Success state
+  if (success) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-12 border border-gray-100 text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <span className="text-4xl">✅</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Market Created!</h1>
+          <p className="text-gray-600 mb-4">
+            Your prediction market has been successfully created and deployed to the blockchain.
+          </p>
+          <p className="text-sm text-gray-500">
+            Redirecting to markets page...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Create a Market</h1>
+        <p className="text-gray-600">Set up your prediction market in a few simple steps</p>
+      </div>
+
+      {/* Progress Steps */}
+      <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center space-x-4">
+          <div className={`flex items-center ${step >= 1 ? 'text-green-500' : 'text-gray-400'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 1 ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
+              1
+            </div>
+            <span className="ml-2 font-medium hidden sm:inline">Question</span>
+          </div>
+          <div className="w-16 h-1 bg-gray-300"></div>
+          <div className={`flex items-center ${step >= 2 ? 'text-green-500' : 'text-gray-400'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 2 ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
+              2
+            </div>
+            <span className="ml-2 font-medium hidden sm:inline">Details</span>
+          </div>
+          <div className="w-16 h-1 bg-gray-300"></div>
+          <div className={`flex items-center ${step >= 3 ? 'text-green-500' : 'text-gray-400'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= 3 ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
+              3
+            </div>
+            <span className="ml-2 font-medium hidden sm:inline">Review</span>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-md p-8 border border-gray-100">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Market</h1>
-        <p className="text-gray-600 mb-4">
-          Create your own prediction market and earn fees from trading activity.
-        </p>
-        <p className="text-sm text-gray-500">
-          Note: Wallet connection required. This feature will be available once wallet integration is complete.
-        </p>
+        {/* Step 1: Market Question */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Market Question *
+              </label>
+              <input
+                type="text"
+                value={formData.question}
+                onChange={(e) => handleInputChange('question', e.target.value)}
+                placeholder="e.g., Will Bitcoin reach $100,000 by end of 2025?"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-lg"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Ask a clear yes/no question about a future event
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              >
+                <option value="Crypto">Crypto</option>
+                <option value="Technology">Technology</option>
+                <option value="Sports">Sports</option>
+                <option value="Politics">Politics</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Science">Science</option>
+                <option value="Business">Business</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setStep(2)}
+                disabled={!formData.question.trim()}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Market Details */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Provide detailed resolution criteria. How will this market be resolved?"
+                rows={5}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Clear resolution criteria help traders make informed decisions
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Resolution Date *
+              </label>
+              <input
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => handleInputChange('endDate', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                When should this market be resolved?
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Initial Liquidity (ALGO) *
+              </label>
+              <input
+                type="number"
+                value={formData.initialLiquidity}
+                onChange={(e) => handleInputChange('initialLiquidity', Number(e.target.value))}
+                min={10}
+                max={10000}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Provide liquidity to enable trading (minimum 10 ALGO)
+              </p>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                onClick={() => setStep(1)}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                disabled={!formData.description.trim() || !formData.endDate}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Review & Submit */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-2">📋 Review Your Market</h3>
+              <p className="text-sm text-blue-700">
+                Please review all details carefully before submitting. Markets cannot be edited after creation.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Question</div>
+                <div className="text-lg font-semibold text-gray-900">{formData.question}</div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Description</div>
+                <div className="text-gray-900">{formData.description}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Category</div>
+                  <div className="font-medium text-gray-900">{formData.category}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Resolution Date</div>
+                  <div className="font-medium text-gray-900">{formData.endDate}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Initial Liquidity</div>
+                <div className="font-medium text-gray-900">{formData.initialLiquidity} ALGO</div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Creator Wallet</div>
+                <div className="font-mono text-sm text-gray-900">
+                  {account?.address.slice(0, 10)}...{account?.address.slice(-8)}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-semibold text-yellow-900 mb-2">💰 Transaction Details</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• Initial liquidity: {formData.initialLiquidity} ALGO</li>
+                <li>• Platform fee: 0.1 ALGO</li>
+                <li>• You'll earn 0.5% fee on all trades</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                onClick={() => setStep(2)}
+                disabled={isSubmitting}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating Market...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🚀</span>
+                    <span>Create Market</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100">
+          <div className="text-2xl mb-2">💎</div>
+          <div className="font-semibold text-gray-900 mb-1">Earn Fees</div>
+          <div className="text-sm text-gray-600">Earn 0.5% on every trade in your market</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100">
+          <div className="text-2xl mb-2">🔒</div>
+          <div className="font-semibold text-gray-900 mb-1">Secure</div>
+          <div className="text-sm text-gray-600">Smart contracts ensure fair resolution</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100">
+          <div className="text-2xl mb-2">⚡</div>
+          <div className="font-semibold text-gray-900 mb-1">Fast</div>
+          <div className="text-sm text-gray-600">Algorand enables instant trades</div>
+        </div>
       </div>
     </div>
   );
