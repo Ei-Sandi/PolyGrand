@@ -42,5 +42,5 @@ echo ""
 echo "Press Ctrl+C to stop all services"
 echo ""
 
-# Start both services
-npm run dev
+# Start both services (from within activated venv)
+exec npm run dev

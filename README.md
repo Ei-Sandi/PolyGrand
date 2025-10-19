@@ -73,8 +73,14 @@ PolyGraph/
 ---
 
 ## Demo Video
+<!-- Loom embed (iframe). Note: GitHub strips iframes, keep the linked thumbnail below as a fallback. -->
+<iframe src="https://www.loom.com/embed/56216210c8154e21961c7687c931f3c7" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="width:100%;max-width:900px;height:520px;"></iframe>
 
+<!-- Fallback clickable thumbnail (works on GitHub and other places that disallow iframes) -->
+[![Watch demo on Loom](https://cdn.loom.com/sessions/thumbnails/56216210c8154e21961c7687c931f3c7-with-play.gif)](https://www.loom.com/share/56216210c8154e21961c7687c931f3c7)
 
+<!-- Direct link -->
+[Open the demo video on Loom](https://www.loom.com/share/56216210c8154e21961c7687c931f3c7)
 ---
 
 
