@@ -54,11 +54,13 @@ PolyGrand is a next-generation prediction market platform built on Algorand that
 
 ### Smart Contract Layer (PyTeal)
 ```
-contracts/
-├── market_contract.py       # Core prediction market logic ✅
-├── deploy.py               # Deployment automation ✅
-├── staking_contract.py     # Social staking (planned)
-└── tournament_contract.py  # Battle royale (planned)
+PolyGraph/
+├── contracts/                 # PyTeal Smart Contracts
+├── backend/                   # python
+├── frontend/                  # React/TypeScript Frontend
+├── scripts/                   # Deployment & Utility Scripts
+└── docs/                      # Documentation
+
 ```
 
 ### Key Components
@@ -68,42 +70,22 @@ contracts/
 - **React/TypeScript Frontend** - Modern responsive UI
 - **Node.js Backend** - Real-time market data and APIs
 
-### Current Implementation Status
+---
 
-**✅ Completed:**
-- PyTeal smart contract framework
-- Basic prediction market logic (create, buy, resolve, claim)
-- ASA-based outcome tokens
-- TestNet deployment scripts
-- Development environment setup
+## Demo Video
 
-**🚧 In Progress:**
-- Frontend UI/UX
-- Backend API endpoints
-- Market resolution oracles
-
-**📋 Planned:**
-- Social trading and staking
-- Tournament system
-- AI integration
-- Mobile apps
 
 ---
 
-## 💰 Business Model
 
-### Revenue Streams
-1. **Trading Fees** - 0.1-0.3% (vs. competitors' 0.5-1%)
-2. **Market Creation** - Listing and verification fees
-3. **Enterprise APIs** - White-label solutions for institutions
-4. **Data Licensing** - Prediction data for research/trading
-5. **Premium Features** - Tournament entries, advanced analytics
+## UI Screenshots
+<img width="1326" height="655" alt="image" src="https://github.com/user-attachments/assets/f6dd9a16-47a5-47e9-bfb5-cccf1b0ac8a7" />
+<img width="1260" height="604" alt="image" src="https://github.com/user-attachments/assets/690ddad3-c559-4ef3-bf88-edbd8e0befd3" />
+<img width="1229" height="627" alt="image" src="https://github.com/user-attachments/assets/27430b06-22d8-48aa-91fc-ffdac85e0b9c" />
+<img width="796" height="618" alt="image" src="https://github.com/user-attachments/assets/eff38dbb-49ed-428f-b95b-e5ce8ddb1ed6" />
 
-### Target Market Segments
-- 🎯 **Crypto Traders** - Cost-sensitive power users seeking alpha
-- 🏢 **Institutional Clients** - Compliance-focused enterprises  
-- 🌍 **Global Markets** - Regions where Ethereum fees are prohibitive
-- 🌱 **ESG-Conscious** - Sustainable platform advocates
+
+
 
 ---
 
@@ -112,23 +94,20 @@ contracts/
 ### Phase 1: Foundation (Months 1-6)
 - [x] Smart contract development
 - [x] TestNet deployment
-- [ ] Frontend MVP launch
+- [x] Frontend MVP launch
 - [ ] Mobile app development
 - [ ] Advanced trading features (limit orders, leverage)
-- **Target:** 10% of Polymarket's trading volume
 
 ### Phase 2: Growth (Months 6-12)
 - [ ] Cross-chain prediction aggregation
 - [ ] Enterprise white-label solutions
 - [ ] US regulatory compliance features
 - [ ] Institutional API launch
-- **Target:** 10,000+ monthly active users
 
 ### Phase 3: Scale (Months 12-24)
 - [ ] Prediction market infrastructure provider
 - [ ] AI prediction data marketplace
 - [ ] Corporate decision market platform
-- **Target:** $100M+ quarterly trading volume
 
 ---
 
@@ -139,7 +118,6 @@ contracts/
 | **Transaction Cost** | $0.0002 | $2-50 | $5-30 | $3-20 |
 | **Finality Speed** | 4.5s | 15s+ | 60s+ | 12s+ |
 | **Energy Efficient** | ✅ | ❌ | ❌ | ❌ |
-| **US Compliant** | 🚧 | ❌ | Partial | Partial |
 | **Social Trading** | ✅ | ❌ | ❌ | ❌ |
 | **Tournaments** | ✅ | ❌ | ❌ | ❌ |
 | **AI Integration** | ✅ | ❌ | ❌ | ❌ |
