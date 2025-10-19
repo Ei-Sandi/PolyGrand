@@ -22,7 +22,7 @@ function transformMarket(backendMarket: any): Market {
   const outcomeBPrice = prices[outcomeBName] || 0.5;
   
   return {
-    id: parseInt(backendMarket.id?.replace('market_', '') || '0', 16) || 0,
+    id: backendMarket.id || 0, // Keep original backend ID (market_abc123)
     appId: backendMarket.app_id || 0,
     title: backendMarket.question || '',
     description: backendMarket.description || '',
@@ -60,6 +60,20 @@ export const createMarket = async (marketData: any): Promise<Market> => {
 };
 
 // Trading
+export const executeTrade = async (
+  marketId: string,
+  traderAddress: string,
+  outcome: string,
+  amount: number
+) => {
+  const response = await api.post(`/markets/${marketId}/trade`, {
+    trader_address: traderAddress,
+    outcome,
+    amount,
+  });
+  return response.data;
+};
+
 export const buyOutcome = async (marketId: number, outcome: number, amount: number) => {
   const response = await api.post(`/markets/${marketId}/buy`, { outcome, amount });
   return response.data;

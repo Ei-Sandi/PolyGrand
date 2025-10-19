@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { TrendingUp, Home, PlusCircle, User, LogOut, Wallet, Menu, X } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
-import { microAlgosToAlgos } from '../services/algorand';
 
 interface LayoutProps {
   children: ReactNode;
@@ -68,12 +67,12 @@ export default function Layout({ children }: LayoutProps) {
                   <div className="text-right hidden lg:block">
                     <div className="text-xs text-gray-500">Balance</div>
                     <div className="font-semibold text-gray-900">
-                      {microAlgosToAlgos(account.balance).toFixed(2)} ALGO
+                      {account.balance.toFixed(2)} ALGO
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <div className="text-sm text-gray-700 font-mono">
+```                    <div className="text-sm text-gray-700 font-mono">
                       {account.address.slice(0, 6)}...{account.address.slice(-4)}
                     </div>
                   </div>
@@ -145,7 +144,7 @@ export default function Layout({ children }: LayoutProps) {
                       </div>
                       <div className="text-xs text-gray-500 mb-1">Balance</div>
                       <div className="font-semibold text-gray-900">
-                        {microAlgosToAlgos(account.balance).toFixed(2)} ALGO
+                        {account.balance.toFixed(2)} ALGO
                       </div>
                     </div>
                     <button

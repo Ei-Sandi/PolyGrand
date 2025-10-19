@@ -15,6 +15,7 @@ interface WalletState {
   showModal: boolean;
   initializeWallet: () => void;
   connect: () => Promise<void>;
+  connectWallet: () => Promise<void>;
   disconnect: () => Promise<void>;
   reconnectSession: () => Promise<void>;
   updateBalance: () => Promise<void>;
@@ -59,10 +60,15 @@ export const useWallet = create<WalletState>()(
         console.log('✅ Mock wallet initialized (no actual Pera Wallet needed)');
       },
 
-      // Fake connect that simulates Pera Wallet behavior
+      // Show wallet modal (connection happens when user clicks wallet type)
       connect: async () => {
+        set({ showModal: true, error: null });
+      },
+
+      // Actually connect wallet after user selects wallet type
+      connectWallet: async () => {
         try {
-          set({ isConnecting: true, error: null, showModal: true });
+          set({ isConnecting: true, error: null });
 
           // Simulate network delay (realistic!)
           await new Promise(resolve => setTimeout(resolve, 1500));

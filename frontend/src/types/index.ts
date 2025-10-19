@@ -1,6 +1,6 @@
 // Market Types
 export interface Market {
-  id: number;
+  id: string | number; // Changed to support backend string IDs (market_abc123)
   appId: number;
   title: string;
   description: string;

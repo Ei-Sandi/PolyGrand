@@ -1,7 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, type ReactNode } from 'react';
 import { useWallet } from './hooks/useWallet';
+import { getMarkets, createMarket as createMarketApi, getPlatformStats } from './services/api';
+import MarketDetail from './pages/MarketDetail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,50 +15,14 @@ const queryClient = new QueryClient({
   },
 });
 
-// Dummy market data
-const DUMMY_MARKETS = [
-  {
-    id: 1,
-    title: "Will Bitcoin reach $100,000 by end of 2025?",
-    description: "Market will resolve YES if Bitcoin (BTC/USD) reaches or exceeds $100,000 at any point before December 31, 2025 11:59 PM UTC.",
-    category: "Crypto",
-    yesPrice: 0.67,
-    noPrice: 0.33,
-    volume: 45230,
-    endDate: "2025-12-31",
-    status: "active"
-  },
-  {
-    id: 2,
-    title: "Will AI replace 10% of jobs by 2026?",
-    description: "Resolves YES if credible studies show that AI has directly replaced at least 10% of total global employment by end of 2026.",
-    category: "Technology",
-    yesPrice: 0.42,
-    noPrice: 0.58,
-    volume: 32100,
-    endDate: "2026-12-31",
-    status: "active"
-  },
-  {
-    id: 3,
-    title: "Will SpaceX land on Mars before 2030?",
-    description: "Market resolves YES if SpaceX successfully lands a spacecraft on Mars with humans on board before January 1, 2030.",
-    category: "Space",
-    yesPrice: 0.28,
-    noPrice: 0.72,
-    volume: 67890,
-    endDate: "2029-12-31",
-    status: "active"
-  }
-];
-
 // Wallet Connect Modal Component (simulates Pera Wallet)
 function WalletModal({ isOpen, onClose, onConnect }: { isOpen: boolean; onClose: () => void; onConnect: () => Promise<void> }) {
   if (!isOpen) return null;
 
   const handleWalletClick = async (walletType: 'mobile' | 'web') => {
     console.log(`Connecting via Pera Wallet ${walletType}...`);
-    await onConnect();
+    onClose(); // Close modal immediately when user clicks
+    await onConnect(); // Then connect in background
   };
 
   return (
@@ -120,15 +86,15 @@ function WalletModal({ isOpen, onClose, onConnect }: { isOpen: boolean; onClose:
 
 // Wallet Connect Button Component
 function WalletButton() {
-  const { account, isConnected, isConnecting, error, showModal, connect, disconnect, setShowModal } = useWallet();
+  const { account, isConnected, isConnecting, error, showModal, connect, disconnect, setShowModal, connectWallet } = useWallet();
 
   const handleOpenModal = () => {
-    setShowModal(true);
+    connect(); // Just opens the modal
   };
 
   const handleConnect = async () => {
     try {
-      await connect();
+      await connectWallet(); // Actually connects after user clicks wallet type
     } catch (error) {
       console.error('Connection error:', error);
       setShowModal(false);
@@ -245,7 +211,12 @@ function SimpleLayout({ children }: { children: ReactNode }) {
 }
 
 // Market Card Component
-function MarketCard({ market }: { market: typeof DUMMY_MARKETS[0] }) {
+function MarketCard({ market }: { market: any }) {
+  const yesPrice = market.outcomeAPrice || 0.5;
+  const noPrice = market.outcomeBPrice || 0.5;
+  const volume = market.totalVolume || 0;
+  const endDate = market.resolutionTime ? new Date(market.resolutionTime).toISOString().split('T')[0] : 'TBD';
+  
   return (
     <Link to={`/markets/${market.id}`}>
       <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer">
@@ -254,7 +225,7 @@ function MarketCard({ market }: { market: typeof DUMMY_MARKETS[0] }) {
             {market.title}
           </h3>
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-            {market.status === 'active' ? 'Active' : 'Closed'}
+            {market.isResolved ? 'Resolved' : 'Active'}
           </span>
         </div>
 
@@ -265,26 +236,26 @@ function MarketCard({ market }: { market: typeof DUMMY_MARKETS[0] }) {
         <div className="space-y-3 mb-4">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-700 font-medium">YES</span>
-              <span className="text-green-600 font-bold">{Math.round(market.yesPrice * 100)}%</span>
+              <span className="text-gray-700 font-medium">{market.outcomeAName || 'YES'}</span>
+              <span className="text-green-600 font-bold">{Math.round(yesPrice * 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${market.yesPrice * 100}%` }}
+                style={{ width: `${yesPrice * 100}%` }}
               />
             </div>
           </div>
 
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-700 font-medium">NO</span>
-              <span className="text-blue-600 font-bold">{Math.round(market.noPrice * 100)}%</span>
+              <span className="text-gray-700 font-medium">{market.outcomeBName || 'NO'}</span>
+              <span className="text-blue-600 font-bold">{Math.round(noPrice * 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${market.noPrice * 100}%` }}
+                style={{ width: `${noPrice * 100}%` }}
               />
             </div>
           </div>
@@ -293,11 +264,11 @@ function MarketCard({ market }: { market: typeof DUMMY_MARKETS[0] }) {
         <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-1">
             <span>📊</span>
-            <span>${(market.volume / 1000).toFixed(1)}K volume</span>
+            <span>${(volume / 1000).toFixed(1)}K volume</span>
           </div>
           <div className="flex items-center space-x-1">
             <span>⏰</span>
-            <span>Ends {market.endDate}</span>
+            <span>Ends {endDate}</span>
           </div>
         </div>
       </div>
@@ -307,6 +278,18 @@ function MarketCard({ market }: { market: typeof DUMMY_MARKETS[0] }) {
 
 // Home Page
 function HomePage() {
+  const { data: markets = [], isLoading: marketsLoading } = useQuery({
+    queryKey: ['markets'],
+    queryFn: getMarkets,
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['platformStats'],
+    queryFn: getPlatformStats,
+  });
+
+  const featuredMarkets = markets.slice(0, 3);
+
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -330,24 +313,28 @@ function HomePage() {
       {/* Platform Stats */}
       <div>
         <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Platform Statistics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-green-500 mb-2">3</div>
-            <div className="text-gray-600">Active Markets</div>
+        {statsLoading ? (
+          <div className="text-center text-gray-500">Loading stats...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
+              <div className="text-4xl font-bold text-green-500 mb-2">{stats?.totalMarkets || 0}</div>
+              <div className="text-gray-600">Active Markets</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
+              <div className="text-4xl font-bold text-green-500 mb-2">${((stats?.totalVolume || 0) / 1000).toFixed(0)}K</div>
+              <div className="text-gray-600">Total Volume</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
+              <div className="text-4xl font-bold text-green-500 mb-2">{stats?.activeUsers || 0}</div>
+              <div className="text-gray-600">Active Traders</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
+              <div className="text-4xl font-bold text-green-500 mb-2">{stats?.resolvedMarkets || 0}</div>
+              <div className="text-gray-600">Resolved Markets</div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-green-500 mb-2">$145K</div>
-            <div className="text-gray-600">Total Volume</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-green-500 mb-2">1.2K</div>
-            <div className="text-gray-600">Active Traders</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-center">
-            <div className="text-4xl font-bold text-green-500 mb-2">0</div>
-            <div className="text-gray-600">Resolved Markets</div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Featured Markets */}
@@ -360,11 +347,17 @@ function HomePage() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {DUMMY_MARKETS.map((market) => (
-            <MarketCard key={market.id} market={market} />
-          ))}
-        </div>
+        {marketsLoading ? (
+          <div className="text-center text-gray-500 py-12">Loading markets...</div>
+        ) : featuredMarkets.length === 0 ? (
+          <div className="text-center text-gray-500 py-12">No markets available yet. Create one!</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredMarkets.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -372,6 +365,11 @@ function HomePage() {
 
 // Markets Page
 function MarketsPage() {
+  const { data: markets = [], isLoading } = useQuery({
+    queryKey: ['markets'],
+    queryFn: getMarkets,
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -396,13 +394,24 @@ function MarketsPage() {
 
       <div>
         <div className="text-sm text-gray-600 mb-4">
-          Showing {DUMMY_MARKETS.length} markets
+          {isLoading ? 'Loading...' : `Showing ${markets.length} markets`}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {DUMMY_MARKETS.map((market) => (
-            <MarketCard key={market.id} market={market} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center text-gray-500 py-12">Loading markets...</div>
+        ) : markets.length === 0 ? (
+          <div className="text-center text-gray-500 py-12">
+            <p className="text-xl mb-4">No markets available yet</p>
+            <Link to="/create" className="text-green-500 hover:text-green-600 font-medium">
+              Create the first market →
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {markets.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -411,17 +420,27 @@ function MarketsPage() {
 // Market Detail Page
 function MarketDetailPage() {
   const { id } = useParams();
-  const market = DUMMY_MARKETS.find(m => m.id === Number(id));
+  const { data: markets = [] } = useQuery({
+    queryKey: ['markets'],
+    queryFn: getMarkets,
+  });
+  
+  const market = markets.find(m => m.id.toString() === id);
 
   if (!market) {
     return (
       <div className="card text-center py-16">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Market not found</h3>
-        <p className="text-gray-600 mb-4">This market does not exist.</p>
+        <p className="text-gray-600 mb-4">This market does not exist or is still loading.</p>
         <Link to="/markets" className="text-green-500 hover:text-green-600">← Back to Markets</Link>
       </div>
     );
   }
+
+  const yesPrice = market.outcomeAPrice || 0.5;
+  const noPrice = market.outcomeBPrice || 0.5;
+  const volume = market.totalVolume || 0;
+  const endDate = market.resolutionTime ? new Date(market.resolutionTime).toISOString().split('T')[0] : 'TBD';
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -433,7 +452,7 @@ function MarketDetailPage() {
             {market.title}
           </h1>
           <span className="px-4 py-2 bg-blue-100 text-blue-800 font-medium rounded-full">
-            Active
+            {market.isResolved ? 'Resolved' : 'Active'}
           </span>
         </div>
 
@@ -442,7 +461,7 @@ function MarketDetailPage() {
         <div className="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200">
           <div>
             <div className="text-sm text-gray-500">Total Volume</div>
-            <div className="text-2xl font-bold text-gray-900">${(market.volume / 1000).toFixed(1)}K</div>
+            <div className="text-2xl font-bold text-gray-900">${(volume / 1000).toFixed(1)}K</div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Category</div>
@@ -450,7 +469,7 @@ function MarketDetailPage() {
           </div>
           <div>
             <div className="text-sm text-gray-500">Ends</div>
-            <div className="text-2xl font-bold text-gray-900">{market.endDate}</div>
+            <div className="text-2xl font-bold text-gray-900">{endDate}</div>
           </div>
         </div>
 
@@ -459,26 +478,26 @@ function MarketDetailPage() {
         <div className="space-y-4">
           <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-lg font-semibold text-gray-900">YES</span>
-              <span className="text-2xl font-bold text-green-600">{Math.round(market.yesPrice * 100)}%</span>
+              <span className="text-lg font-semibold text-gray-900">{market.outcomeAName || 'YES'}</span>
+              <span className="text-2xl font-bold text-green-600">{Math.round(yesPrice * 100)}%</span>
             </div>
             <div className="w-full bg-green-200 rounded-full h-3">
               <div
                 className="bg-green-500 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${market.yesPrice * 100}%` }}
+                style={{ width: `${yesPrice * 100}%` }}
               />
             </div>
           </div>
 
           <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-lg font-semibold text-gray-900">NO</span>
-              <span className="text-2xl font-bold text-blue-600">{Math.round(market.noPrice * 100)}%</span>
+              <span className="text-lg font-semibold text-gray-900">{market.outcomeBName || 'NO'}</span>
+              <span className="text-2xl font-bold text-blue-600">{Math.round(noPrice * 100)}%</span>
             </div>
             <div className="w-full bg-blue-200 rounded-full h-3">
               <div
                 className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${market.noPrice * 100}%` }}
+                style={{ width: `${noPrice * 100}%` }}
               />
             </div>
           </div>
@@ -495,6 +514,8 @@ function MarketDetailPage() {
 // Create Market Page
 function CreateMarketPage() {
   const { isConnected, account } = useWallet();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [step, setStep] = React.useState(1);
   const [formData, setFormData] = React.useState({
     question: '',
@@ -502,40 +523,46 @@ function CreateMarketPage() {
     category: 'Crypto',
     endDate: '',
     initialLiquidity: 100,
+    resolutionSource: 'Official sources and credible reports',
     outcomes: ['Yes', 'No']
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
+
+  const createMarketMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const payload = {
+        question: data.question,
+        description: data.description,
+        category: data.category,
+        outcomes: data.outcomes,
+        end_time: new Date(data.endDate).toISOString(),
+        resolution_source: data.resolutionSource,
+        initial_liquidity: data.initialLiquidity,
+        creator_address: account?.address || 'UNKNOWN',
+      };
+      return createMarketApi(payload);
+    },
+    onSuccess: () => {
+      // Invalidate markets query to refetch
+      queryClient.invalidateQueries({ queryKey: ['markets'] });
+      queryClient.invalidateQueries({ queryKey: ['platformStats'] });
+      
+      // Redirect to markets page after 2 seconds
+      setTimeout(() => {
+        navigate('/markets');
+      }, 2000);
+    },
+    onError: (error) => {
+      console.error('Failed to create market:', error);
+      alert('Failed to create market. Please try again.');
+    },
+  });
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    
-    // Simulate market creation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log('Creating market with data:', formData);
-    console.log('Creator wallet:', account?.address);
-    
-    setIsSubmitting(false);
-    setSuccess(true);
-    
-    // Reset after 3 seconds
-    setTimeout(() => {
-      setSuccess(false);
-      setStep(1);
-      setFormData({
-        question: '',
-        description: '',
-        category: 'Crypto',
-        endDate: '',
-        initialLiquidity: 100,
-        outcomes: ['Yes', 'No']
-      });
-    }, 3000);
+    createMarketMutation.mutate(formData);
   };
 
   // If not connected, show wallet prompt
@@ -557,7 +584,7 @@ function CreateMarketPage() {
   }
 
   // Success state
-  if (success) {
+  if (createMarketMutation.isSuccess) {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-xl shadow-md p-12 border border-gray-100 text-center">
@@ -788,17 +815,17 @@ function CreateMarketPage() {
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(2)}
-                disabled={isSubmitting}
+                disabled={createMarketMutation.isPending}
                 className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ← Back
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={createMarketMutation.isPending}
                 className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                {isSubmitting ? (
+                {createMarketMutation.isPending ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Creating Market...</span>
@@ -847,7 +874,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/markets" element={<MarketsPage />} />
-            <Route path="/markets/:id" element={<MarketDetailPage />} />
+            <Route path="/markets/:id" element={<MarketDetail />} />
             <Route path="/create" element={<CreateMarketPage />} />
           </Routes>
         </SimpleLayout>

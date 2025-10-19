@@ -6,13 +6,17 @@ Main application entry point
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 
 from routes import markets, tournaments, staking, ai
 from routes import stats as stats_routes
 from services.websocket import websocket_manager
+from storage import storage
+from seed_data import get_seed_markets
 
 
 @asynccontextmanager
@@ -23,6 +27,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print("✅ Algorand service initialized")
     print("✅ WebSocket manager ready")
     print("✅ In-memory storage initialized")
+    
+    # Load seed data
+    seed_markets = get_seed_markets()
+    for market in seed_markets:
+        storage.create_market(market)
+    print(f"✅ Loaded {len(seed_markets)} seed markets")
 
     yield
 
@@ -47,6 +57,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Custom validation error handler
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Custom handler for validation errors to see details"""
+    print("❌ Validation Error Details:")
+    print(f"   - URL: {request.url}")
+    print(f"   - Method: {request.method}")
+    print(f"   - Errors: {exc.errors()}")
+    try:
+        body = await request.body()
+        print(f"   - Request Body: {body.decode()}")
+    except:
+        pass
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "detail": exc.errors(),
+            "body": str(exc.body) if hasattr(exc, 'body') else None
+        }
+    )
 
 
 # Health check endpoint

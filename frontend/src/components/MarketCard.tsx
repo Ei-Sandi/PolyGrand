@@ -15,16 +15,16 @@ export default function MarketCard({ market }: MarketCardProps) {
     <Link to={`/markets/${market.id}`} className="block">
       <div className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-4">
+        <div className="flex items-start justify-between mb-4 gap-3">
+          <h3 className="text-lg font-semibold text-gray-900 flex-1 break-words">
             {market.title}
           </h3>
           {market.isResolved ? (
-            <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+            <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full flex-shrink-0 whitespace-nowrap">
               Resolved
             </span>
           ) : (
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full flex-shrink-0 whitespace-nowrap">
               Active
             </span>
           )}
