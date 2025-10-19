@@ -10,7 +10,7 @@
 [![PyTeal](https://img.shields.io/badge/Smart%20Contracts-PyTeal-blue?style=for-the-badge)](https://pyteal.readthedocs.io/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-[Live Demo](#) • [Documentation](./docs/) • [Roadmap](#roadmap) • [Contributing](./CONTRIBUTING.md)
+[Quick Start](#-quick-start) • [Roadmap](#-roadmap) • [Architecture](#-technical-architecture)
 
 </div>
 
@@ -149,12 +149,14 @@ contracts/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.12+
-- Node.js 18+
-- npm 9+
-- Algorand account with TestNet funds (for contract deployment)
+- **Python** 3.12+
+- **Node.js** 18+
+- **npm** 9+
+- **Algorand account** with TestNet funds (for contract deployment)
 
-### One-Command Setup
+### Installation & Setup
+
+#### One-Command Setup
 
 The easiest way to run the entire PolyGrand stack (frontend + backend):
 
@@ -174,27 +176,32 @@ start.bat
 
 The script will:
 - ✅ Create Python virtual environment
-- ✅ Install all dependencies
+- ✅ Install all dependencies (Python & Node.js)
 - ✅ Start backend (FastAPI) on http://localhost:8000
 - ✅ Start frontend (Vite) on http://localhost:3000
 
-### Manual Setup
+#### Manual Setup
 
 If you prefer to set up manually:
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/Ei-Sandi/PolyGrand.git
 cd PolyGrand
 
-# Install all dependencies
+# 2. Install Python dependencies
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+
+# 3. Install Node.js dependencies
 npm install
 
-# Start both frontend and backend
+# 4. Start both services
 npm run dev
 ```
 
-### Available Commands
+#### Available Commands
 
 ```bash
 npm run dev              # Start frontend + backend together
@@ -205,13 +212,14 @@ npm run install:all      # Install all dependencies
 npm run clean            # Clean all node_modules
 ```
 
+### Access the Application
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8000
+
 ### Smart Contracts Deployment (Optional)
 
 ```bash
-# Set up Python environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
 # Configure environment
 cp .env.example .env
 # Edit .env with your Algorand credentials
@@ -221,14 +229,6 @@ cd contracts
 python compile.py
 python deploy.py
 ```
-
-### Access the Application
-
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8000
-- **API Documentation:** http://localhost:8000/docs
-
-For detailed setup instructions, see [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md)
 
 ---
 
@@ -264,27 +264,9 @@ For detailed setup instructions, see [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-### Development Setup
-See [ALGOKIT_SETUP.md](./ALGOKIT_SETUP.md) for detailed development environment setup.
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 📞 Contact
-
-- **Website:** [Coming Soon]
-- **Twitter:** [@PolyGrand]
-- **Discord:** [Join our community]
-- **Email:** contact@polygrand.io
 
 ---
 
@@ -292,6 +274,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ on Algorand**
 
-[⭐ Star us on GitHub](https://github.com/Ei-Sandi/PolyGrand) • [🐦 Follow on Twitter](#) • [💬 Join Discord](#)
+[⭐ Star us on GitHub](https://github.com/Ei-Sandi/PolyGrand)
 
 </div>
